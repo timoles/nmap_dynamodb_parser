@@ -10,18 +10,20 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table("TestTable4")
 
 nmap_report = NmapParser.parse_fromfile('0BBM3XYOWN32GN8A1IEJYQ7YUET2BS6C1TBHMILK.xml')
-item = {}
+
 # scanned ports
 scanned_ports = nmap_report.hosts[0].get_ports()
 scanned_ports_db = {}
 scanned_hosts = nmap_report.hosts
 for host in scanned_hosts:
 	for hostname in host.hostnames:
+		item = {}
+		key = {}
 		# Primary / Sort-key
 		domain = str.join(".", hostname.split(".")[-2:])
 		subdomain = str.join(".", hostname.split(".")[:-2])
-		item.update({"Domain":domain})
-		item.update({"Subdomain":subdomain})
+		key.update({"Domain":domain})
+		key.update({"Subdomain":subdomain})
 		# Additional data
 		item.update({"host-address":host.address})
 		item.update({"host-status":{"status":host.status,"date":host.endtime}})
@@ -36,7 +38,14 @@ for host in scanned_hosts:
 		item.update({"ports-open": ports_service})
 		# item.update({"ports-open": {}})  # TODO wrong
 		item.update({"scanned-ports": scanned_ports_db})
-		inputData = table.update_item(Item=item)  # TODO mby change to update_item
+		#inputData = table.update_item(Item=item)  # TODO mby change to update_item
+		inputData = table.update_item(
+										Key=key,
+										UpdateExpression="set ports-open = :r",
+									    ExpressionAttributeValues={
+									        ':r': 'false',
+									    },
+									    ReturnValues="UPDATED_NEW")  # TODO mby change to update_item
 		print(inputData)
 		sys.exit()  # TODO
 
