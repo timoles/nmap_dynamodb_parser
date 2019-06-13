@@ -25,8 +25,8 @@ for host in scanned_hosts:
 		key.update({"Domain":domain})
 		key.update({"Subdomain":subdomain})
 		# Additional data
-		item.update({"host-address":host.address})
-		item.update({"host-status":{"status":host.status,"date":host.endtime}})
+		item.update({"host_address":host.address})
+		item.update({"host_status":{"status":host.status,"date":host.endtime}})
 		scanned_ports = host.get_ports()
 		scanned_ports_db = {}
 		for port in scanned_ports:
@@ -34,17 +34,23 @@ for host in scanned_hosts:
 		open_ports = host.get_open_ports()
 		ports_service = {}
 		for port in open_ports:
-			ports_service.update({str(port[0]): {"nmap-service-desc": str(nmap_report.hosts[0].get_service(port[0], protocol=port[1])), "date": host.endtime}})
-		item.update({"ports-open": ports_service})
+			ports_service.update({str(port[0]): {"nmap_service_desc": str(nmap_report.hosts[0].get_service(port[0], protocol=port[1])), "date": host.endtime}})
+		item.update({"ports_open": ports_service})
 		# item.update({"ports-open": {}})  # TODO wrong
-		item.update({"scanned-ports": scanned_ports_db})
+		item.update({"scanned_ports": scanned_ports_db})
 		#inputData = table.update_item(Item=item)  # TODO mby change to update_item
+		#ports_service = {"5000":{}}
 		inputData = table.update_item(
 										Key=key,
-										UpdateExpression="set ports-open = :r",
+										#UpdateExpression='set #ports_open.#port = :r',
+										UpdateExpression='set #ports_open = :r',
 									    ExpressionAttributeValues={
-									        ':r': 'false',
+									        ':r': {"date":"testdate", "nmap_service_desc":"desc"},
 									    },
+							        	ExpressionAttributeNames={
+							        		"#ports_open":"ports_open",
+									        "#port":"9000"
+									    },  
 									    ReturnValues="UPDATED_NEW")  # TODO mby change to update_item
 		print(inputData)
 		sys.exit()  # TODO
