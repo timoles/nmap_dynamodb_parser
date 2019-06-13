@@ -7,12 +7,42 @@ from libnmap.parser import NmapParser
 
 # Get the table we want to work on
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table("TestTable4")
+table = dynamodb.Table("TestTable3")
 
 nmap_report = NmapParser.parse_fromfile('0BBM3XYOWN32GN8A1IEJYQ7YUET2BS6C1TBHMILK.xml')
+key = {"Domain": "telekom.de", "Subdomain": "access"}
+response = table.get_item(
+    Key=key,
+    AttributesToGet=[
+        'ports-open',
+        'ports-scanned',
+	],
+    ConsistentRead=True,
+    ReturnConsumedCapacity='INDEXES',#|'TOTAL'|'NONE',
+#    ProjectionExpression='ports-open',
+#    ExpressionAttributeNames={
+#        'string': 'string'
+#    }
+)
+#print(response)
+#x = response["Item"]["ports-open"]
+#print(response["Item"]["ports-open"])
+
+# We had these ports open in the DB
+open_in_db = response["Item"]["ports-open"]
+print(open_in_db)
+#  We scanned these ports
+scanned_ports = nmap_report.hosts[0].get_ports()
+print(scanned_ports)
+for k in open_in_db:
+	print(k)
 
 # scanned ports
 scanned_ports = nmap_report.hosts[0].get_ports()
+op = nmap_report.hosts[0].get_open_ports()
+
+sys.exit()
+
 scanned_ports_db = {}
 scanned_hosts = nmap_report.hosts
 for host in scanned_hosts:
@@ -49,7 +79,6 @@ for host in scanned_hosts:
 									    },
 							        	ExpressionAttributeNames={
 							        		"#ports_open":"ports_open",
-									        "#port":"9000"
 									    },  
 									    ReturnValues="UPDATED_NEW")  # TODO mby change to update_item
 		print(inputData)
