@@ -7,41 +7,9 @@ from libnmap.parser import NmapParser
 
 # Get the table we want to work on
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table("TestTable3")
+table = dynamodb.Table("TestTable4")
 
 nmap_report = NmapParser.parse_fromfile('0BBM3XYOWN32GN8A1IEJYQ7YUET2BS6C1TBHMILK.xml')
-key = {"Domain": "telekom.de", "Subdomain": "access"}
-response = table.get_item(
-    Key=key,
-    AttributesToGet=[
-        'ports-open',
-        'ports-scanned',
-	],
-    ConsistentRead=True,
-    ReturnConsumedCapacity='INDEXES',#|'TOTAL'|'NONE',
-#    ProjectionExpression='ports-open',
-#    ExpressionAttributeNames={
-#        'string': 'string'
-#    }
-)
-#print(response)
-#x = response["Item"]["ports-open"]
-#print(response["Item"]["ports-open"])
-
-# We had these ports open in the DB
-open_in_db = response["Item"]["ports-open"]
-print(open_in_db)
-#  We scanned these ports
-scanned_ports = nmap_report.hosts[0].get_ports()
-print(scanned_ports)
-for k in open_in_db:
-	print(k)
-
-# scanned ports
-scanned_ports = nmap_report.hosts[0].get_ports()
-op = nmap_report.hosts[0].get_open_ports()
-
-sys.exit()
 
 scanned_ports_db = {}
 scanned_hosts = nmap_report.hosts
@@ -52,8 +20,8 @@ for host in scanned_hosts:
 		# Primary / Sort-key
 		domain = str.join(".", hostname.split(".")[-2:])
 		subdomain = str.join(".", hostname.split(".")[:-2])
-		key.update({"Domain":domain})
-		key.update({"Subdomain":subdomain})
+		item.update({"Domain":domain})
+		item.update({"Subdomain":subdomain})
 		# Additional data
 		item.update({"host_address":host.address})
 		item.update({"host_status":{"status":host.status,"date":host.endtime}})
@@ -64,23 +32,24 @@ for host in scanned_hosts:
 		open_ports = host.get_open_ports()
 		ports_service = {}
 		for port in open_ports:
-			ports_service.update({str(port[0]): {"nmap_service_desc": str(nmap_report.hosts[0].get_service(port[0], protocol=port[1])), "date": host.endtime}})
+			ports_service.update({str(port[0]): {"nmap_service_desc": str(nmap_report.hosts[0].get_service(port[0], protocol=port[1])), "date": host.endtime, "proto": port[1]}})
 		item.update({"ports_open": ports_service})
 		# item.update({"ports-open": {}})  # TODO wrong
 		item.update({"scanned_ports": scanned_ports_db})
+		inputData = table.put_item(Item=item)
 		#inputData = table.update_item(Item=item)  # TODO mby change to update_item
 		#ports_service = {"5000":{}}
-		inputData = table.update_item(
-										Key=key,
-										#UpdateExpression='set #ports_open.#port = :r',
-										UpdateExpression='set #ports_open = :r',
-									    ExpressionAttributeValues={
-									        ':r': {"date":"testdate", "nmap_service_desc":"desc"},
-									    },
-							        	ExpressionAttributeNames={
-							        		"#ports_open":"ports_open",
-									    },  
-									    ReturnValues="UPDATED_NEW")  # TODO mby change to update_item
+#		inputData = table.update_item(
+#										Key=key,
+#										#UpdateExpression='set #ports_open.#port = :r',
+#										UpdateExpression='set #ports_open = :r',
+#									    ExpressionAttributeValues={
+#									        ':r': {"date":"testdate", "nmap_service_desc":"desc"},
+#									    },
+#							        	ExpressionAttributeNames={
+#							        		"#ports_open":"ports_open",
+#									    },  
+#									    ReturnValues="UPDATED_NEW")  # TODO mby change to update_item
 		print(inputData)
 		sys.exit()  # TODO
 
