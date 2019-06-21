@@ -11,10 +11,6 @@ python3 parse_update_nmap.py
 
 ## Functionality 
 
-### dynamo-db.py
-
-Parse nmap scan and put items in rows
-
 ### parse_update_nmap.py
 
 Parse nmap scan and update the results with a dynamodb aws database
