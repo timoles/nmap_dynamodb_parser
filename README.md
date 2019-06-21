@@ -6,7 +6,9 @@
 # Init aws credentials
 aws configure
 
-python3 
+python3 parse_update_nmap.py
+```
+
 ## Functionality 
 
 ### dynamo-db.py
