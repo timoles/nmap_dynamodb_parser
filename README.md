@@ -1,14 +1,21 @@
 # AWS Cloud API Readme
 
+## Usage
+
+```bash
+# Init aws credentials
+aws configure
+
+python3 
 ## Functionality 
 
 ### dynamo-db.py
 
 Parse nmap scan and put items in rows
 
-### update_item_dp.py
+### parse_update_nmap.py
 
-Parse nmap scan and update missing items
+Parse nmap scan and update the results with a dynamodb aws database
 
 ## Databases
 
